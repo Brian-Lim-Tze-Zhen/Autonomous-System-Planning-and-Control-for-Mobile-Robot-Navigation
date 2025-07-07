@@ -32,14 +32,23 @@ sudo apt install ros-noetic-turtlebot3 ros-noetic-turtlebot3-simulations
 
 ## 🗂️ Folder Structure
 turtlebot3_nav_assignment/
-├── launch/                 # Launch files
-├── maps/                  # Static map used for planning
-├── rviz/                  # RViz config files
-├── scripts/               # Python nodes (global_planner, navigator, etc.)
-├── worlds/                # Custom Gazebo world
-├── turtlebot3_assignment_full.pdf  # Project report
-├── video/                 # Demo Video
+├── launch/                                 # Launch files
+├── maps/                                   # Static map for A* planning
+├── rviz/                                   # RViz config files
+├── scripts/                                # Python nodes (global planner, navigator, etc.)
+│   ├── global_planner.py
+│   ├── navigator.py
+│   ├── kinematic_controller.py
+│   └── potential_fields.py
+├── worlds/                                 # Custom Gazebo world
+├── demo.mp4                                # Demo video (1–3 min)
+├── turtlebot3_assignment_full_description.pdf     # Project overview report
+├── Planning_and_Control_for_Mobile_Robot_Navigation.pdf  # IEEE-style report
+├── CMakeLists.txt
+├── package.xml
 └── README.md
+
+
 
 ⚙️ How to Run
 1. Clone this repository inside your catkin workspace
@@ -60,7 +69,7 @@ rosrun turtlebot3_nav_assignment potential_fields.py
 
 4. Send a goal in RViz using 2D Nav Goal
 
-🎬 Watch the [demo video](video/completed.mp4)
+🎬 Watch the [demo video](demo.mp4)
 Trajectories with and without obstacle shown in the report
 
 Final performance:
@@ -72,7 +81,7 @@ Path Length: 8.91 meters
 Average Speed: 0.09 m/s
 
 📄 Report
-Read the full IEEE-style report here: turtlebot3_assignment_full.pdf
+Read the full IEEE-style report here: Planning and Control for Mobile Robot Navigation.pdf
 
 👤 Author
 Brian Lim Tze Zhen
