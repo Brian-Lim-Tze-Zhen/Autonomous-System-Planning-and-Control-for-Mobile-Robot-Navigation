@@ -30,7 +30,7 @@ Install required ROS packages:
 ```bash
 sudo apt install ros-noetic-turtlebot3 ros-noetic-turtlebot3-simulations
 
-🗂️ Folder Structure
+## 🗂️ Folder Structure
 turtlebot3_nav_assignment/
 ├── launch/                 # Launch files
 ├── maps/                  # Static map used for planning
@@ -60,7 +60,7 @@ rosrun turtlebot3_nav_assignment potential_fields.py
 
 4. Send a goal in RViz using 2D Nav Goal
 
-
+🎬 Watch the [demo video](video/completed.mp4)
 Trajectories with and without obstacle shown in the report
 
 Final performance:
