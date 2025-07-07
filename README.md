@@ -60,8 +60,6 @@ rosrun turtlebot3_nav_assignment potential_fields.py
 
 4. Send a goal in RViz using 2D Nav Goal
 
-📊 Demo & Results
-📽️ Demo Video
 
 Trajectories with and without obstacle shown in the report
 
