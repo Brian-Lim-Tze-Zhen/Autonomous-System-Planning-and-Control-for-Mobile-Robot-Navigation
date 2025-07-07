@@ -52,6 +52,36 @@ catkin_make
 2. Launch the simulation
 roslaunch turtlebot3_nav_assignment simulation.launch
 
-3.Run the nodes (in separate terminals)  
+3. Run the nodes (in separate terminals)
+rosrun turtlebot3_nav_assignment global_planner.py
+rosrun turtlebot3_nav_assignment navigator.py
+rosrun turtlebot3_nav_assignment kinematic_controller.py
+rosrun turtlebot3_nav_assignment potential_fields.py
+
+4. Send a goal in RViz using 2D Nav Goal
+
+📊 Demo & Results
+📽️ Demo Video
+
+Trajectories with and without obstacle shown in the report
+
+Final performance:
+
+Time to Goal: 103.53 seconds
+
+Path Length: 8.91 meters
+
+Average Speed: 0.09 m/s
+
+📄 Report
+Read the full IEEE-style report here: turtlebot3_assignment_full.pdf
+
+👤 Author
+Brian Lim Tze Zhen
+Technische Hochschule Deggendorf
+Dept. of Mechatronics and Cyber-Physical Systems
+📧 brian.lim-tze-zhen@stud.th-deg.de
+
+
 
 
