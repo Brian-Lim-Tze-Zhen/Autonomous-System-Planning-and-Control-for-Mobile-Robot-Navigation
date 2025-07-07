@@ -81,7 +81,7 @@ Path Length: 8.91 meters
 Average Speed: 0.09 m/s
 
 📄 Report
-Read the full IEEE-style report here: Planning and Control for Mobile Robot Navigation.pdf
+Read the full IEEE-style report here: Brian_Lim_Tze_Zhen_IEEE_Report.pdf
 
 👤 Author
 Brian Lim Tze Zhen
