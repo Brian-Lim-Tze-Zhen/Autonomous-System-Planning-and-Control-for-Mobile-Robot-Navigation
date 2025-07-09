@@ -5,7 +5,7 @@ from nav_msgs.msg import OccupancyGrid, Path, Odometry
 from geometry_msgs.msg import PoseStamped, Pose, Point, Quaternion
 import heapq
 import math
-from scipy.ndimage import grey_dilation  # ✅ NEW: For obstacle inflation
+from scipy.ndimage import grey_dilation  # NEW: For obstacle inflation
 
 class GlobalPlanner:
     def __init__(self):
@@ -22,10 +22,10 @@ class GlobalPlanner:
         self.map_origin = None
         self.map_width = None
         self.map_height = None
-        self.goal_start_time = None  
+        self.goal_start_time = None
 
         self.start_pose = None
-        rospy.loginfo("✅ GlobalPlanner initialized.")
+        rospy.loginfo("GlobalPlanner initialized.")
 
     def map_callback(self, msg):
         self.map_width = msg.info.width
@@ -33,15 +33,15 @@ class GlobalPlanner:
         self.map_resolution = msg.info.resolution
         self.map_origin = msg.info.origin
 
-        # ✅ Load raw data and reshape
+        # Load raw data and reshape
         raw_data = np.array(msg.data).reshape((self.map_height, self.map_width))
 
-        # ✅ Inflate obstacles (adjust kernel size as needed)
+        # Inflate obstacles (adjust kernel size as needed)
         inflated = grey_dilation(raw_data, size=(5, 5))  # 5x5 kernel = 0.25m if res=0.05
         inflated[raw_data == -1] = 100  # keep unknown areas blocked
 
         self.map_data = inflated
-        rospy.loginfo("🛡️ Map inflated and loaded.")
+        rospy.loginfo("Map inflated and loaded.")
 
     def odom_callback(self, msg):
         pos = msg.pose.pose.position
@@ -49,10 +49,10 @@ class GlobalPlanner:
 
     def goal_callback(self, msg):
         if self.map_data is None:
-            rospy.logwarn("⚠️ Map not received yet.")
+            rospy.logwarn("Map not received yet.")
             return
         if self.start_pose is None:
-            rospy.logwarn("⚠️ Start pose not set.")
+            rospy.logwarn("Start pose not set.")
             return
 
         start = self.world_to_grid(self.start_pose)
@@ -62,10 +62,9 @@ class GlobalPlanner:
         if path:
             self.publish_path(path)
             rospy.set_param("/goal_start_time", rospy.Time.now().to_sec())
-            rospy.loginfo("🕒 Goal time recorded.")
+            rospy.loginfo("Goal time recorded.")
         else:
-            rospy.logwarn("❌ A* failed to find a path.")
-
+            rospy.logwarn("A* failed to find a path.")
 
     def world_to_grid(self, pos):
         x = int((pos[0] - self.map_origin.position.x) / self.map_resolution)
@@ -138,7 +137,7 @@ class GlobalPlanner:
             pose.pose.orientation = Quaternion(0, 0, 0, 1)
             path_msg.poses.append(pose)
         self.path_pub.publish(path_msg)
-        rospy.loginfo("✅ Published path with %d waypoints." % len(grid_path))
+        rospy.loginfo("Published path with %d waypoints." % len(grid_path))
 
 if __name__ == "__main__":
     planner = GlobalPlanner()
