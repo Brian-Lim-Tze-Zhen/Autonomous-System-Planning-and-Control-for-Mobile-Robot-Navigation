@@ -13,7 +13,7 @@ from std_srvs.srv import Trigger, TriggerResponse
 class PotentialFieldPlanner:
     def __init__(self):
         rospy.init_node("potential_field_node")
-        rospy.loginfo("✅ PotentialFieldPlanner initialized.")
+        rospy.loginfo("PotentialFieldPlanner initialized.")
 
         # Publishers and Subscribers
         self.cmd_pub = rospy.Publisher("/cmd_vel", Twist, queue_size=1)
@@ -33,7 +33,6 @@ class PotentialFieldPlanner:
         self.path_msg.header.frame_id = "map"
         self.last_path_time = rospy.Time.now()
 
-
         # Service
         self.potential_field_srv = rospy.Service("/potential_field_cmd", Trigger, self.handle_potential_field_request)
 
@@ -50,51 +49,45 @@ class PotentialFieldPlanner:
         pose_stamped.pose.position = pos
         pose_stamped.pose.orientation = ori
         self.path_msg.poses.append(pose_stamped)
-        
 
     def scan_callback(self, msg):
         self.latest_scan = msg
 
     def goal_callback(self, msg):
         self.goal = (msg.pose.position.x, msg.pose.position.y)
-        rospy.loginfo(f"🌟 New goal received: {self.goal}")
+        rospy.loginfo(f"New goal received: {self.goal}")
 
     def handle_potential_field_request(self, req):
         if self.pose is None or self.latest_scan is None or self.goal is None:
             if self.goal is None:
-                rospy.loginfo_throttle(5, "🕓 Waiting for next goal...")
+                rospy.loginfo_throttle(5, "Waiting for next goal...")
             else:
                 if self.pose is None:
-                    rospy.logwarn("❌ Missing robot pose (/odom not received yet).")
+                    rospy.logwarn("Missing robot pose (/odom not received yet).")
                 if self.latest_scan is None:
-                    rospy.logwarn("❌ Missing LIDAR scan (/scan not received yet).")
+                    rospy.logwarn("Missing LIDAR scan (/scan not received yet).")
             return TriggerResponse(success=False, message="Missing pose, scan, or goal")
 
-
-
-        # ✅ Check goal distance BEFORE calling run_potential_field_with_goal
+        # Check goal distance BEFORE calling run_potential_field_with_goal
         x, y, _ = self.pose
         goal_x, goal_y = self.goal
         distance = math.hypot(goal_x - x, goal_y - y)
 
         # Allow robot to slow down and stabilize before declaring goal reached
         if distance < 0.2:
-            rospy.loginfo("🛑 Goal reached. Robot stopped.")
+            rospy.loginfo("Goal reached. Robot stopped.")
             self.goal = None
             self.cmd_pub.publish(Twist())
-            
-            # ⏱️ Compute time-to-goal
+
+            # Compute time-to-goal
             if rospy.has_param("/goal_start_time"):
                 start_time = rospy.get_param("/goal_start_time")
                 duration = rospy.Time.now().to_sec() - start_time
-                rospy.loginfo(f"⏱️ Time to goal: {duration:.2f} seconds")
+                rospy.loginfo(f"Time to goal: {duration:.2f} seconds")
                 rospy.delete_param("/goal_start_time")
 
-            rospy.loginfo("🕓 Waiting for next goal via /move_base_simple/goal...")
+            rospy.loginfo("Waiting for next goal via /move_base_simple/goal...")
             return TriggerResponse(success=True, message="Goal reached.")
-
-
-
 
         # Otherwise, continue with potential field
         cmd, F_att, F_rep = self.run_potential_field_with_goal(
@@ -103,16 +96,14 @@ class PotentialFieldPlanner:
             laser_msg=self.latest_scan
         )
 
-        self.cmd_pub.publish(cmd)  # ✅ now guaranteed not published at goal
+        self.cmd_pub.publish(cmd)
         self.publish_force_vector(F_att, F_rep)
 
         return TriggerResponse(success=True, message="Potential field command executed")
 
-
-
     def run_potential_field_with_goal(self, robot_pose, goal_pose, laser_msg,
-                                  k_att=0.8, k_rep=0.4, d0=0.65,
-                                  max_speed=0.1, angular_gain=1.0):
+                                      k_att=0.8, k_rep=0.4, d0=0.65,
+                                      max_speed=0.1, angular_gain=1.0):
 
         x, y, theta = robot_pose
         goal_x, goal_y = goal_pose
@@ -124,13 +115,11 @@ class PotentialFieldPlanner:
         # 1. Attractive force
         F_att = k_att * np.linalg.norm([dx, dy]) * np.array([dx, dy]) / (np.linalg.norm([dx, dy]) + 1e-5)
 
-
-
-      # 2. Repulsive force
+        # 2. Repulsive force
         F_rep = np.zeros(2)
         angle = laser_msg.angle_min
         ranges = np.array(laser_msg.ranges)
-        ranges = np.convolve(ranges, np.ones(5)/5, mode='same')
+        ranges = np.convolve(ranges, np.ones(5) / 5, mode='same')
 
         for r in ranges:
             if angle < -math.radians(100) or angle > math.radians(100):
@@ -141,22 +130,20 @@ class PotentialFieldPlanner:
                 continue
 
             # Robot local frame: repulsion points backwards along laser ray
-            obs_dir_robot = -np.array([np.cos(angle), np.sin(angle)])  # push away
+            obs_dir_robot = -np.array([np.cos(angle), np.sin(angle)])
 
             # Rotate to world frame
             rot = np.array([[np.cos(theta), -np.sin(theta)],
-                            [np.sin(theta),  np.cos(theta)]])
+                            [np.sin(theta), np.cos(theta)]])
             obs_dir_world = rot @ obs_dir_robot
 
             inv_r = 1.0 / max(r, 0.2)
             inv_d0 = 1.0 / d0
             magnitude = k_rep * ((inv_r - inv_d0) / (r ** 2))
-
             magnitude = min(magnitude, 1.0)
 
             F_rep += magnitude * obs_dir_world
             angle += laser_msg.angle_increment
-
 
         # 3. Combine forces
         F_total = F_att + F_rep
@@ -166,7 +153,7 @@ class PotentialFieldPlanner:
 
         angle_to_force = math.atan2(F_total[1], F_total[0])
         heading_error = math.atan2(math.sin(angle_to_force - theta), math.cos(angle_to_force - theta))
-        heading_error = max(-math.pi/2, min(math.pi/2, heading_error))  # Now correctly limited
+        heading_error = max(-math.pi / 2, min(math.pi / 2, heading_error))
 
         # 4. Velocity command with limits
         cmd = Twist()
@@ -177,10 +164,9 @@ class PotentialFieldPlanner:
         else:
             cmd.linear.x = min(raw_linear, max_speed)
 
-
         cmd.angular.z = max(-0.2, min(angular_gain * heading_error, 0.2))
 
-        # 5. Path recording (make sure last_path_time is initialized in __init__)
+        # 5. Path recording
         if (rospy.Time.now() - self.last_path_time).to_sec() > 0.3:
             pose = PoseStamped()
             pose.header.frame_id = "map"
@@ -193,7 +179,6 @@ class PotentialFieldPlanner:
             self.last_path_time = rospy.Time.now()
 
         return cmd, F_att, F_rep
-
 
     def publish_force_vector(self, F_att, F_rep):
         if self.pose is None:
