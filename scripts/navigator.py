@@ -10,7 +10,7 @@ from visualization_msgs.msg import Marker
 class Navigator:
     def __init__(self):
         rospy.init_node("navigator")
-        rospy.loginfo("✅ Navigator node initialized.")
+        rospy.loginfo("Navigator node initialized.")
 
         # Publisher
         self.cmd_pub = rospy.Publisher("/cmd_vel", Twist, queue_size=1)
@@ -19,23 +19,23 @@ class Navigator:
         # Subscriber
         rospy.Subscriber("/scan", LaserScan, self.scan_callback)
         rospy.Subscriber("/move_base_simple/goal", PoseStamped, self.goal_callback)
+
         # Control state
         self.override_until = rospy.Time.now()
         self.last_obstacle_time = rospy.Time(0)
-        self.goal = None  
+        self.goal = None
         self.pf_goal_reached = False
-
 
         # Start control loop
         rospy.Timer(rospy.Duration(0.1), self.control_loop)
 
-    def goal_callback(self, msg):  # ⬅️ Entirely new function
+    def goal_callback(self, msg):
         self.goal = (msg.pose.position.x, msg.pose.position.y)
-        rospy.loginfo(f"🎯 New navigation goal received: {self.goal}")
+        rospy.loginfo(f"New navigation goal received: {self.goal}")
 
     def scan_callback(self, msg):
         if self.pf_goal_reached:
-            rospy.loginfo_throttle(5.0, "🎯 Goal already reached. Not calling potential field.")
+            rospy.loginfo_throttle(5.0, "Goal already reached. Not calling potential field.")
             return
 
         obstacle_detected = any(0.12 < r < 0.4 for r in msg.ranges)
@@ -43,7 +43,7 @@ class Navigator:
             now = rospy.Time.now()
             if (now - self.last_obstacle_time).to_sec() > 2.0:
                 self.last_obstacle_time = now
-                rospy.logwarn("⚠️ Obstacle detected within 0.4 m.")
+                rospy.logwarn("Obstacle detected within 0.4 m.")
 
             try:
                 rospy.wait_for_service('/potential_field_cmd', timeout=1.0)
@@ -51,29 +51,26 @@ class Navigator:
                 resp = pf_service()
                 if resp.success:
                     if "Goal reached" in resp.message:
-                        rospy.loginfo("🎯 Potential field: Goal reached. Stopping navigation.")
+                        rospy.loginfo("Potential field: Goal reached. Stopping navigation.")
                         self.pf_goal_reached = True
                     else:
-                        rospy.loginfo("✅ Potential field command used.")
+                        rospy.loginfo("Potential field command used.")
                     self.override_until = rospy.Time.now() + rospy.Duration(1.5)
                 else:
-                    rospy.logwarn("⚠️ Potential field service responded with failure.")
+                    rospy.logwarn("Potential field service responded with failure.")
             except rospy.ServiceException as e:
-                rospy.logerr(f"❌ Failed to call potential field service: {e}")
+                rospy.logerr(f"Failed to call potential field service: {e}")
 
             self.publish_lidar_rays(msg)
 
-
     def control_loop(self, event):
         if rospy.Time.now() < self.override_until:
-            rospy.loginfo_throttle(1.0, "⛔ In override mode, suppressing kinematic controller.")
+            rospy.loginfo_throttle(1.0, "In override mode, suppressing kinematic controller.")
         else:
             if self.goal is None:
-                rospy.loginfo_throttle(5.0, "🕓 No active goal. Waiting for /move_base_simple/goal...")
+                rospy.loginfo_throttle(5.0, "No active goal. Waiting for /move_base_simple/goal...")
             else:
-                rospy.loginfo_throttle(5.0, f"📍 Navigating toward goal: {self.goal}")
-
-
+                rospy.loginfo_throttle(5.0, f"Navigating toward goal: {self.goal}")
 
     def publish_lidar_rays(self, scan_msg):
         marker = Marker()
